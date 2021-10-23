@@ -64,9 +64,9 @@ class AdaBoost:
         Returns:
             The error in the stump(float.)
         """
-
-        # TODO
-        pass
+        wrong_list = [0 if y[i] == y_pred[i] else 1 for i in range(0, len(y))]
+        multiplied_wts_list = [wrong_list[i] * sample_weights[i] for i in range(0, len(wrong_list))]
+        return sum(multiplied_wts_list) / sum(sample_weights)
 
     def compute_alpha(self, error):
         """
@@ -78,9 +78,9 @@ class AdaBoost:
         Returns:
             The alpha value(float.)
         """
-        eps = 1e-9
-        # TODO
-        pass
+        eps = 1e-9 + error
+        alpha = 0.5 * np.log((1 - eps) / eps)
+        return alpha
 
     def update_weights(self, y, y_pred, sample_weights, alpha):
         """
@@ -94,9 +94,16 @@ class AdaBoost:
         Returns:
             new_sample_weights:  M Vector(new Weight of each sample float.)
         """
+        # z = (2  * alpha) / (1 + np.exp(2 * alpha))
+        # print(f"Z= {z}")
+        # correctly_classified = np.exp(-alpha) * z
+        # wrongly_classified = np.exp(alpha) * z
 
-        # TODO
-        pass
+        error = self.stump_error(y=y, y_pred=y_pred, sample_weights=sample_weights) + 1e-9
+        correctly_classified = 1 / (2 * (1 - error))
+        wrongly_classified = 1 / (2 * error)
+        updated_weights = [sample_weights[i] * correctly_classified  if y[i] == y_pred[i] else sample_weights[i] * wrongly_classified for i in range(0, len(y))]
+        return updated_weights
 
     def predict(self, X):
         """
@@ -107,7 +114,9 @@ class AdaBoost:
         Returns:
             pred: N Vector(Class target predicted for all the inputs as int.)
         """
-        # TODO
+        print(self.alphas)
+        for stump in self.stumps:
+            print(stump.predict(X))
         pass
 
     def evaluate(self, X, y):
