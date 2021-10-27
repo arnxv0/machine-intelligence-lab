@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
-
+import pandas as pd
 """
 Use DecisionTreeClassifier to represent a stump.
 ------------------------------------------------
@@ -64,9 +64,17 @@ class AdaBoost:
         Returns:
             The error in the stump(float.)
         """
-        wrong_list = [0 if y[i] == y_pred[i] else 1 for i in range(0, len(y))]
-        multiplied_wts_list = [wrong_list[i] * sample_weights[i] for i in range(0, len(wrong_list))]
-        return sum(multiplied_wts_list) / sum(sample_weights)
+        loss = []
+        for i in range(len(y)):
+            if y[i] == y_pred[i]:
+                loss.append(0)
+            else:
+                loss.append(1)
+        error = sum(np.multiply(loss, sample_weights ))
+        return error
+
+        # TODO
+        pass
 
     def compute_alpha(self, error):
         """
@@ -78,9 +86,11 @@ class AdaBoost:
         Returns:
             The alpha value(float.)
         """
-        eps = 1e-9 + error
-        alpha = 0.5 * np.log((1 - eps) / eps)
+        eps = 1e-9
+        alpha = 0.5 * np.log((1 - error) / (error + eps))
         return alpha
+        # TODO
+        pass
 
     def update_weights(self, y, y_pred, sample_weights, alpha):
         """
@@ -94,13 +104,16 @@ class AdaBoost:
         Returns:
             new_sample_weights:  M Vector(new Weight of each sample float.)
         """
-
-        correctly_classified = np.exp([-alpha])[0]
-        wrongly_classified = np.exp([alpha])[0]
-        updated_weights = [sample_weights[i] * correctly_classified if y[i] == y_pred[i] else sample_weights[i] * wrongly_classified for i in range(0, len(y))]
-        weights_sum = sum(updated_weights)
-        updated_weights = [i / weights_sum for i in updated_weights]
-        return updated_weights
+        updated_sample_weights = list()
+        new_sample_weights = list()
+        for i in range(len(y)):
+            if y[i] == y_pred[i]:
+                updated_sample_weights.append((sample_weights[i] * np.exp(-alpha)))
+            else:
+                updated_sample_weights.append((sample_weights[i] * np.exp(alpha)))
+        for ele in updated_sample_weights:
+            new_sample_weights.append(ele / sum(updated_sample_weights))
+        return new_sample_weights
 
     def predict(self, X):
         """
@@ -111,19 +124,14 @@ class AdaBoost:
         Returns:
             pred: N Vector(Class target predicted for all the inputs as int.)
         """
-        final_predictions = []
-        predictions = []
-        for stump in self.stumps:
-            predictions.append(stump.predict(X))
-        
-        for i in range(len(predictions[0])):
-            cur_pred = [predictions[j][i] for j in range(len(predictions))]
-            score_dict = dict.fromkeys(set(cur_pred), 0);
-            for j in range(len(cur_pred)):
-                score_dict[cur_pred[j]] += self.alphas[j]
-            final_predictions.append(max(score_dict, key=score_dict.get))
+        # TODO
+        weak_preds = pd.DataFrame(index=range(len(X)), columns=range(self.n_stumps))
+        for i in range(self.n_stumps):
+            y_pred_m = self.stumps[i].predict(X) * self.alphas[i]
+            weak_preds.iloc[:, i] = y_pred_m
+        y_pred = (1 * np.sign(weak_preds.T.sum())).astype(int)
+        return y_pred
 
-        return final_predictions
 
     def evaluate(self, X, y):
         """
@@ -138,5 +146,6 @@ class AdaBoost:
         pred = self.predict(X)
         # find correct predictions
         correct = (pred == y)
+
         accuracy = np.mean(correct) * 100  # accuracy calculation
         return accuracy
