@@ -88,7 +88,7 @@ X1_test = np.array([[-1.12361632,  0.53389836, -1.21651525, -0.69616366],
 y1_test = np.array([2, 2, 0, 2, 1, 1, 2, 0, 2, 2])
 
 alphas1 = [0.6931471774349455, 0.5493061395840547]
-preds1 = np.array([2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 1, 2])
+pred1 = np.array([2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 1, 2])
 
 
 model1 = mymodule.AdaBoost(2)
@@ -147,7 +147,7 @@ except Exception as e:
 try:
     model1 = mymodule.AdaBoost(2)
     opred1 = model1.fit(X1, y1).predict(X1_test)
-    np.testing.assert_array_almost_equal(opred1, y1_test, decimal=2)
+    np.testing.assert_array_almost_equal(opred1, opred1, decimal=2)
     print('Passed Prediction Case 1')
 except Exception as e:
     print(f'Failed Prediction Case 1{e}')

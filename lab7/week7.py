@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 
 """
@@ -94,15 +95,12 @@ class AdaBoost:
         Returns:
             new_sample_weights:  M Vector(new Weight of each sample float.)
         """
-        # z = (2  * alpha) / (1 + np.exp(2 * alpha))
-        # print(f"Z= {z}")
-        # correctly_classified = np.exp(-alpha) * z
-        # wrongly_classified = np.exp(alpha) * z
 
-        error = self.stump_error(y=y, y_pred=y_pred, sample_weights=sample_weights) + 1e-9
-        correctly_classified = 1 / (2 * (1 - error))
-        wrongly_classified = 1 / (2 * error)
-        updated_weights = [sample_weights[i] * correctly_classified  if y[i] == y_pred[i] else sample_weights[i] * wrongly_classified for i in range(0, len(y))]
+        correctly_classified = np.exp([-alpha])[0]
+        wrongly_classified = np.exp([alpha])[0]
+        updated_weights = [sample_weights[i] * correctly_classified if y[i] == y_pred[i] else sample_weights[i] * wrongly_classified for i in range(0, len(y))]
+        weights_sum = sum(updated_weights)
+        updated_weights = [i / weights_sum for i in updated_weights]
         return updated_weights
 
     def predict(self, X):
@@ -114,10 +112,19 @@ class AdaBoost:
         Returns:
             pred: N Vector(Class target predicted for all the inputs as int.)
         """
-        print(self.alphas)
+        final_predictions = []
+        predictions = []
         for stump in self.stumps:
-            print(stump.predict(X))
-        pass
+            predictions.append(stump.predict(X))
+        
+        for i in range(len(predictions[0])):
+            cur_pred = [predictions[j][i] for j in range(len(predictions))]
+            score_dict = dict.fromkeys(cur_pred, 0);
+            for j in range(len(cur_pred)):
+                score_dict[cur_pred[j]] += self.alphas[j]
+            final_predictions.append(max(score_dict, key=score_dict.get))
+
+        return final_predictions
 
     def evaluate(self, X, y):
         """
@@ -132,6 +139,5 @@ class AdaBoost:
         pred = self.predict(X)
         # find correct predictions
         correct = (pred == y)
-
         accuracy = np.mean(correct) * 100  # accuracy calculation
         return accuracy
