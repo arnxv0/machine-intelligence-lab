@@ -80,7 +80,7 @@ class KMeansClustering:
                 distances_from_centroids.append(distance)
             centroid_number = distances_from_centroids.index(min(distances_from_centroids))
             result.append(centroid_number)
-        return result
+        return np.array(result)
 
     def m_step(self, data, cluster_assgn):
         """
@@ -90,9 +90,27 @@ class KMeansClustering:
             data: M x D Matrix(M training samples with D attributes each)(numpy float)
         Change self.centroids
         """
-        print(data)
-        print(cluster_assgn)
-        pass
+        count_dict = {i:0 for i in cluster_assgn}
+        avg_dict = {key:[] for key, value in count_dict.items()}
+        for idx, point in enumerate(data.tolist()):
+            cluster = cluster_assgn[idx]
+            count_dict[cluster] += 1
+            cluster_total = avg_dict[cluster]
+            if len(cluster_total) == 0:
+                avg_dict[cluster] = point
+            else:
+                avg_dict[cluster] = [cluster_total[i] + point[i] for i in range(len(point))]
+        
+        sorted_cluster_list = list(set(cluster_assgn))
+        sorted_cluster_list.sort()
+
+        centroids = []
+        for cluster in sorted_cluster_list:
+            cluster_count = count_dict[cluster]
+            cluster_sum = avg_dict[cluster]
+            centroids.append([i / cluster_count for i in cluster_sum])
+
+        self.centroids = np.array(centroids)
 
     def evaluate(self, data):
         """
@@ -102,5 +120,16 @@ class KMeansClustering:
         Returns:
             metric : (float.)
         """
-        #TODO
-        pass
+        def find_distance(a, b):
+            distance_squares = [pow((a[i] - b[i]), 2) for i in range(len(a))]
+            return sum(distance_squares)
+
+        centroid_assigned = self.e_step(data)
+        result = 0
+        for i in range(len(data)):
+            result += find_distance(data[i], self.centroids[centroid_assigned[i]])
+
+        # print(data)
+        # print(centroid_assigned)
+        print(result)
+        return result
